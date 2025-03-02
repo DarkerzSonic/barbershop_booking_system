@@ -34,7 +34,7 @@ services:
 
   frontend:
     build:
-      context: ./frontend/barbershop
+      context: ./frontend
       dockerfile: Dockerfile
     container_name: barbershop_frontend
     ports:
