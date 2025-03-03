@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import BarberListCreateView, BarberDetailView, BookingListCreateView, BookingDetailView
-from .views import barber_login, barber_register, book_barber_slot
+from .views import barber_login, barber_register, book_barber_slot, barber_cancel_booking
 
 urlpatterns = [
     path('barbers/', BarberListCreateView.as_view(), name='barber-list-create'),
@@ -10,4 +10,5 @@ urlpatterns = [
     path('barber-login/', barber_login, name='barber_login'),
     path('barber-register/', barber_register, name='barber_register'),
     path('book-barber-slot/', book_barber_slot, name='book_barber_slot'),
+    path('barber-cancel-booking/', barber_cancel_booking, name='barber_cancel_booking'),
 ]

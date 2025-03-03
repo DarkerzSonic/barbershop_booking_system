@@ -5,6 +5,7 @@ import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import axios from 'axios';
 import Cookies from 'js-cookie';
+import { ClipLoader } from 'react-spinners'; // Import the spinner
 
 const CustomerBooking = () => {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -15,6 +16,8 @@ const CustomerBooking = () => {
   const [customerName, setCustomerName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false); // Add loading state
+  const [triggerEffect, setTriggerEffect] = useState(false); // State to trigger useEffect
   const navigate = useNavigate();
 
   // Get the barbers list
@@ -63,7 +66,7 @@ const CustomerBooking = () => {
 
     fetchBarbers();
     fetchUnavailableSlotsList();
-  }, []);
+  }, [triggerEffect]);
 
   // Define time slots from 10 AM to 7 PM
   const timeSlots = [];
@@ -81,6 +84,8 @@ const CustomerBooking = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
+    setLoading(true); // start loading
+
     // Validation
     if (!selectedBarber || !selectedDate || !selectedTime || !customerName || !phone || !email) {
       alert('Please fill out all fields, select a barber, date, and time slot.');
@@ -95,8 +100,6 @@ const CustomerBooking = () => {
         contactNo: phone,
         email: email,
       };
-    
-      console.log(bookingData);
 
     // POST request to make booking
     axios.post('http://127.0.0.1:8000/api/book-barber-slot/', bookingData, {
@@ -108,11 +111,16 @@ const CustomerBooking = () => {
     })
     .then((response) => {
         alert(`Appointment Booking Successful!`);
-        navigate('/');
+        // navigate('/');
     })
     .catch((error) => {
         alert(`Appointment Booking Failed: ${error}`);
     })
+    .finally(() => {
+      setLoading(false); // Stop loading
+      setTriggerEffect((prev) => !prev);  // trigger useEffect
+      setSelectedTime(null);
+    });
     
   };
 
@@ -199,7 +207,7 @@ const CustomerBooking = () => {
         )}
 
         {/* Booking Form */}
-        {selectedBarber && selectedDate && (<form onSubmit={handleSubmit} style={styles.form}>
+        {selectedBarber && selectedDate && selectedTime && (<form onSubmit={handleSubmit} style={styles.form}>
           <div style={styles.formGroup}>
             <label htmlFor="name">Name:</label>
             <input
@@ -235,7 +243,11 @@ const CustomerBooking = () => {
             />
           </div>
           <button type="submit" style={styles.button}>
-            Book Appointment
+            {loading ? (
+            <ClipLoader color="#fff" size={20} /> // Show spinner
+            ) : (
+              'Book Appointment' // Show button text
+            )}
           </button>
         </form>
         )}

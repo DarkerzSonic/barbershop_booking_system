@@ -6,6 +6,8 @@ from rest_framework import generics
 from .models import Barber, Booking
 from .serializers import BarberSerializer, BookingSerializer
 from datetime import datetime
+from django.core.mail import send_mail
+import textwrap
 
 class BarberListCreateView(generics.ListCreateAPIView):
     queryset = Barber.objects.all()
@@ -136,10 +138,50 @@ def book_barber_slot(request):
                 contact_no=contact_no,
                 email=email
             )
+
+            # Send email to customer
+            send_mail(
+                subject='Ouch! Barbershop - Booking Information',  # Email subject
+                message=textwrap.dedent(f"""
+                Hi {customer_name},
+
+                You have made an appointment with barber {barber.name} on {booking_datetime}.
+
+                To reschedule your appointment, feel free contact your barber at {barber.contact_no} or {barber.email}.
+
+                Thanks.
+
+                Best Regards,
+                Ouch! Barbershop
+                """),  # Email body
+                from_email='darkerzsonic@gmail.com',  # Sender email
+                recipient_list=[email],  # List of recipient emails
+                fail_silently=False,
+            )
+
+            # send email to barber
+            send_mail(
+                subject='Ouch! Barbershop - New Booking Information',  # Email subject
+                message=textwrap.dedent(f"""
+                Hi {barber.name},
+
+                You have a new appointment with {customer_name} on {booking_datetime}.
+
+                If you are unavailable on the specified time, please contact your customer at {contact_no} or {email} to reschedule the appointment.
+
+                Thanks.
+
+                Best Regards,
+                Ouch! Barbershop
+                """),  # Email body
+                from_email='darkerzsonic@gmail.com',  # Sender email
+                recipient_list=[barber.email],  # List of recipient emails
+                fail_silently=False,
+            )
             
             # Return success response
             return JsonResponse({
-                'message': 'Slot booked successfully',
+                'message': 'Slot booked & email sent successfully',
                 'booking_id': booking.booking_id,
                 'barber_id': booking.barber.barber_id,
                 'booking_datetime': booking.booking_datetime.strftime('%Y-%m-%d %H:%M:%S'),
@@ -156,7 +198,67 @@ def book_barber_slot(request):
     return JsonResponse({'error': 'Invalid request method'}, status=405)
 
 """OPTIONAL: Barber Cancel Customer Booking POST Request"""
+@csrf_exempt
 def barber_cancel_booking(request):
-    if request.method == 'POST': # maybe use DELETE (?)
-        pass
+    if request.method == 'POST':
+        try:
+            # Parse data from POST request
+            data = json.loads(request.body)
+            booking_id = data.get('booking_id')
+            barber_id = data.get('barber_id')
+            booking_datetime = data.get('booking_datetime')
+            customer_name = data.get('customer_name')
+            contact_no = data.get('contactNo')
+            email = data.get('email')
+
+            # get barber data
+            barber = Barber.objects.filter(barber_id=barber_id).first()
+
+            # update database to remove the booking
+            Booking.objects.get(booking_id=booking_id).delete()
+
+            # Send email to customer
+            send_mail(
+                subject='Ouch! Barbershop - Booking Cancelled Notice',  # Email subject
+                message=textwrap.dedent(f"""
+                Hi {customer_name},
+
+                We are sorry to notify you that your barber {barber.name} has cancelled your booking appointment on {booking_datetime}.
+
+                Feel free to book a new appointment or contact your barber at {barber.contact_no} or {barber.email}.
+
+                Thanks.
+
+                Best Regards,
+                Ouch! Barbershop
+                """),  # Email body
+                from_email='darkerzsonic@gmail.com',  # Sender email
+                recipient_list=[email],  # List of recipient emails
+                fail_silently=False,
+            )
+
+            # send email to barber
+            send_mail(
+                subject='Ouch! Barbershop - Booking Cancelled Notice',  # Email subject
+                message=textwrap.dedent(f"""
+                Hi {barber.name},
+
+                You have cancelled your booking appointment with {customer_name} on {booking_datetime}.
+
+                Feel free to contact your customer at {contact_no} or {email} to reschedule the appointment.
+
+                Thanks.
+
+                Best Regards,
+                Ouch! Barbershop
+                """),  # Email body
+                from_email='darkerzsonic@gmail.com',  # Sender email
+                recipient_list=[barber.email],  # List of recipient emails
+                fail_silently=False,
+            )
+
+            return JsonResponse({'status': 'success', 'message': 'Appointment cancelled & email sent successfully!'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+    return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=400)
 
