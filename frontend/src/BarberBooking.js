@@ -95,6 +95,15 @@ const BarberBooking = () => {
     setSelectedBooking(null);
   };
 
+  // Extract the unique dates and convert them to Date objects
+  const bookedDates = Object.keys(bookings).map((dateString) => new Date(dateString));
+
+  const isDateAllowed = (date) => {
+    return bookedDates.some(
+      (bookedDate) => date.toDateString() === bookedDate.toDateString()
+    );
+  };
+
   return (
     <div style={styles.container}>
       <div style={styles.logoContainer} onClick={handleLogoClick}>
@@ -116,6 +125,13 @@ const BarberBooking = () => {
             selected={selectedDate}
             onSelect={handleDateSelect}
             fromDate={new Date()}
+            disabled={(day) => !isDateAllowed(day)}
+            modifiers={{
+              allowed: (day) => isDateAllowed(day), // Add a modifier for allowed dates
+            }}
+            modifiersStyles={{
+              allowed: { backgroundColor: '#90EE90', color: '#000' }, // Highlight allowed dates
+            }}
           />
         </div>
 
@@ -133,7 +149,7 @@ const BarberBooking = () => {
                     style={{
                       ...styles.timeSlotButton,
                       ...(selectedTime === time && styles.selectedTimeSlotButton),
-                      ...(isBooked && styles.bookedTimeSlotButton), // Style for booked slots
+                      // ...(isBooked && styles.bookedTimeSlotButton), // Style for booked slots
                     }}
                     onClick={() => handleTimeSlotClick(time)}
                     disabled={!isBooked} // Disable unbooked slots
@@ -229,9 +245,9 @@ const styles = {
     border: '1px solid #007bff',
   },
   bookedTimeSlotButton: {
-    backgroundColor: '#ffc107', // Yellow for booked slots
-    color: '#000', // Black text for better contrast on yellow
-    border: '1px solid #ffc107', // Yellow border
+    // backgroundColor: '#ffc107', // Yellow for booked slots
+    // color: '#000', // Black text for better contrast on yellow
+    // border: '1px solid #ffc107', // Yellow border
   },
   dialogBox: {
     marginTop: '20px',
