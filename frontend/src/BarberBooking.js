@@ -4,20 +4,21 @@ import { format } from 'date-fns';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 import axios from 'axios';
+import Cookies from 'js-cookie';
+import { ClipLoader } from 'react-spinners'; // Import the spinner
+
 
 const BarberBooking = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null); // Track selected booking details
   const [bookings, setBookings] = useState({}); // barber's booked slots
+  const [loading, setLoading] = useState(false); // Add loading state
+  const [triggerEffect, setTriggerEffect] = useState(false); // State to trigger useEffect
 
   // get barber_id & details after Login page
   const location = useLocation();
   const { barber_id, name, email } = location.state || {};
-
-  // const [name, setName] = useState('');
-  // const [phone, setPhone] = useState('');
-  // const [email, setEmail] = useState('');
   const navigate = useNavigate();
 
   // Get logged on barber schedule list
@@ -27,6 +28,7 @@ const BarberBooking = () => {
       const bookings = {};
 
       response.data.forEach((booking) => {
+          const bookingId = booking.booking_id.toString();
           const barberId = booking.barber.toString(); // Convert barber ID to string
           const bookingDatetime = new Date(booking.booking_datetime); // Parse the datetime
           const dateKey = bookingDatetime.toISOString().split("T")[0]; // Extract date (YYYY-MM-DD)
@@ -37,9 +39,16 @@ const BarberBooking = () => {
             bookings[dateKey] = {};
           }
 
-          // Initialize the date's entry if it doesn't exist
+          // Initialize the datetime's entry if it doesn't exist
           if (!bookings[dateKey][timeKey]) {
-            bookings[dateKey][timeKey] = {'name': booking.customer_name, 'phone': booking.contact_no, 'email': booking.email};
+            bookings[dateKey][timeKey] = {
+              'booking_id': booking.booking_id, 
+              'name': booking.customer_name, 
+              'phone': booking.contact_no, 
+              'email': booking.email, 
+              'barber_id': booking.barber,
+              "booking_datetime": dateKey + ' ' + timeKey + ':00',
+            };
           }
       
           setBookings(bookings);
@@ -49,7 +58,7 @@ const BarberBooking = () => {
     .catch(error => {
       console.error(`Could not get selected barber: ${error}`);
     })
-  }, [barber_id]);
+  }, [triggerEffect]);
 
   // Define time slots from 10 AM to 7 PM
   const timeSlots = [];
@@ -76,11 +85,41 @@ const BarberBooking = () => {
 
   const handleCancelAppointment = () => {
     if (selectedDate && selectedTime) {
+
+      setLoading(true); // Start loading
+
       const dateKey = format(selectedDate, 'yyyy-MM-dd');
-      // Simulate canceling the appointment (replace with actual API call)
-      console.log('Appointment canceled for:', dateKey, selectedTime);
-      setSelectedBooking(null); // Clear the selected booking
-      alert('Appointment canceled successfully!');
+
+      const target_booking = {
+        "booking_id": selectedBooking.booking_id,
+        "barber_id": selectedBooking.barber_id,
+        // "booking_datetime": tmpDateKey + ' ' + tmpTimeKey + ':00',
+        "booking_datetime": selectedBooking.booking_datetime,
+        "customer_name": selectedBooking.name,
+        "email": selectedBooking.email,
+        "contactNo": selectedBooking.phone
+      }
+
+      // POST request to cancel the appointment
+      axios.post('http://127.0.0.1:8000/api/barber-cancel-booking/', target_booking, {
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': Cookies.get('csrftoken'),
+          },
+          withCredentials: true, 
+      })
+      .then((response) => {
+          alert(`Appointment cancelled for ${selectedBooking.name} on ${dateKey} ${selectedTime}.`);
+          setSelectedBooking(null); // Clear the selected booking
+          navigate('/barberBooking');
+      })
+      .catch((error) => {
+          alert(`Appointment Cancellation Failed: ${error}`);
+      })
+      .finally(() => {
+        setLoading(false); // Stop loading
+        setTriggerEffect((prev) => !prev);  // trigger useEffect
+      });
     }
   };
 
@@ -93,6 +132,15 @@ const BarberBooking = () => {
     setSelectedDate(date);
     setSelectedTime(null);
     setSelectedBooking(null);
+  };
+
+  // Extract the unique dates and convert them to Date objects
+  const bookedDates = Object.keys(bookings).map((dateString) => new Date(dateString));
+
+  const isDateAllowed = (date) => {
+    return bookedDates.some(
+      (bookedDate) => date.toDateString() === bookedDate.toDateString()
+    );
   };
 
   return (
@@ -116,6 +164,13 @@ const BarberBooking = () => {
             selected={selectedDate}
             onSelect={handleDateSelect}
             fromDate={new Date()}
+            disabled={(day) => !isDateAllowed(day)}
+            modifiers={{
+              allowed: (day) => isDateAllowed(day), // Add a modifier for allowed dates
+            }}
+            modifiersStyles={{
+              allowed: { backgroundColor: '#90EE90', color: '#000' }, // Highlight allowed dates
+            }}
           />
         </div>
 
@@ -133,7 +188,7 @@ const BarberBooking = () => {
                     style={{
                       ...styles.timeSlotButton,
                       ...(selectedTime === time && styles.selectedTimeSlotButton),
-                      ...(isBooked && styles.bookedTimeSlotButton), // Style for booked slots
+                      // ...(isBooked && styles.bookedTimeSlotButton), // Style for booked slots
                     }}
                     onClick={() => handleTimeSlotClick(time)}
                     disabled={!isBooked} // Disable unbooked slots
@@ -163,7 +218,11 @@ const BarberBooking = () => {
               style={styles.cancelButton}
               onClick={handleCancelAppointment}
             >
-              Cancel Appointment
+            {loading ? (
+                <ClipLoader color="#fff" size={20} /> // Show spinner
+              ) : (
+                'Cancel Appointment' // Show button text
+              )}
             </button>
           </div>
         )}
@@ -229,9 +288,9 @@ const styles = {
     border: '1px solid #007bff',
   },
   bookedTimeSlotButton: {
-    backgroundColor: '#ffc107', // Yellow for booked slots
-    color: '#000', // Black text for better contrast on yellow
-    border: '1px solid #ffc107', // Yellow border
+    // backgroundColor: '#ffc107', // Yellow for booked slots
+    // color: '#000', // Black text for better contrast on yellow
+    // border: '1px solid #ffc107', // Yellow border
   },
   dialogBox: {
     marginTop: '20px',

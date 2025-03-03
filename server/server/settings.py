@@ -142,3 +142,14 @@ CORS_ALLOWED_ORIGINS = [
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:3000',
 ]
+
+# For development (prints emails to the console)
+# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# For production (example using Gmail SMTP)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'darkerzsonic@gmail.com'  # Enter your host email
+EMAIL_HOST_PASSWORD = '' # Enter your app password (gmail: https://myaccount.google.com/apppasswords)
