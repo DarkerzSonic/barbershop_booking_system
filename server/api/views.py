@@ -9,6 +9,8 @@ from datetime import datetime
 from django.core.mail import send_mail
 import textwrap
 
+host_email = 'darkerzsonic@gmail.com' # enter host email
+
 class BarberListCreateView(generics.ListCreateAPIView):
     queryset = Barber.objects.all()
     serializer_class = BarberSerializer
@@ -154,7 +156,7 @@ def book_barber_slot(request):
                 Best Regards,
                 Ouch! Barbershop
                 """),  # Email body
-                from_email='darkerzsonic@gmail.com',  # Sender email
+                from_email=host_email,  # Sender email
                 recipient_list=[email],  # List of recipient emails
                 fail_silently=False,
             )
@@ -174,7 +176,7 @@ def book_barber_slot(request):
                 Best Regards,
                 Ouch! Barbershop
                 """),  # Email body
-                from_email='darkerzsonic@gmail.com',  # Sender email
+                from_email=host_email,  # Sender email
                 recipient_list=[barber.email],  # List of recipient emails
                 fail_silently=False,
             )
@@ -232,7 +234,7 @@ def barber_cancel_booking(request):
                 Best Regards,
                 Ouch! Barbershop
                 """),  # Email body
-                from_email='darkerzsonic@gmail.com',  # Sender email
+                from_email=host_email,  # Sender email
                 recipient_list=[email],  # List of recipient emails
                 fail_silently=False,
             )
@@ -252,7 +254,7 @@ def barber_cancel_booking(request):
                 Best Regards,
                 Ouch! Barbershop
                 """),  # Email body
-                from_email='darkerzsonic@gmail.com',  # Sender email
+                from_email=host_email,  # Sender email
                 recipient_list=[barber.email],  # List of recipient emails
                 fail_silently=False,
             )
