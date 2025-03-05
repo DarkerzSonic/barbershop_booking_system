@@ -22,7 +22,7 @@ git clone https://github.com/DarkerzSonic/barbershop_booking_system.git
 cd barbershop_booking_system
 ```
 
-#### Setup Email Server in **[/server/server/settings.py](https://github.com/DarkerzSonic/barbershop_booking_system/blob/d60b5c73ec2b56a997234a1c6e47ff98c0436121/server/server/settings.py#L149-L155)**
+#### Setup Email Server on Line 149 in **[/server/server/settings.py](https://github.com/DarkerzSonic/barbershop_booking_system/blob/main/server/server/settings.py)**
 ```
 # For production (example using Gmail SMTP)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -33,7 +33,7 @@ EMAIL_HOST_USER = 'host@email.com'  # Enter your host email
 EMAIL_HOST_PASSWORD = 'apppassword' # Enter your app password (gmail: https://myaccount.google.com/apppasswords)
 ```
 
-#### Reaplce Sender Email in **[/server/api/views.py](https://github.com/DarkerzSonic/barbershop_booking_system/blob/d60b5c73ec2b56a997234a1c6e47ff98c0436121/server/api/views.py#L12)**
+#### Reaplce Sender Email on Line 12 in **[/server/api/views.py](https://github.com/DarkerzSonic/barbershop_booking_system/blob/main/server/api/views.py)**
 ```
 host_email = 'host@email.com' # enter host email
 ```
